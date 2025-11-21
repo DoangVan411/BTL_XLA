@@ -24,10 +24,7 @@ class PanoramaStitcher:
     """Class xử lý ghép ảnh panorama sử dụng SIFT, Feature Matching, Homography, RANSAC"""
     
     def __init__(self):
-        # Khởi tạo SIFT detector với các tham số tối ưu
-        # nOctaveLayers: số lượng DoG images trong mỗi octave
-        # contrastThreshold: ngưỡng để lọc keypoints yếu (contrast thấp)
-        # edgeThreshold: ngưỡng để loại bỏ keypoints trên edge (dùng Harris corner response)
+        # VIETLAI: Viết lại thuật toán SIFT 
         self.sift = cv2.SIFT_create(
             nOctaveLayers=3,
             contrastThreshold=0.04,
@@ -54,6 +51,7 @@ class PanoramaStitcher:
            - Vector 128 chiều (16 × 8), chuẩn hóa L2-norm
         """
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # VIETLAI
         keypoints, descriptors = self.sift.detectAndCompute(gray, None)
         return keypoints, descriptors
     
@@ -75,6 +73,7 @@ class PanoramaStitcher:
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=50)  # Số lần kiểm tra, cao hơn = chính xác hơn nhưng chậm hơn
         
+        #VIETLAI
         flann = cv2.FlannBasedMatcher(index_params, search_params)
         matches = flann.knnMatch(desc1, desc2, k=2)
         
@@ -119,6 +118,7 @@ class PanoramaStitcher:
         # Tìm homography với RANSAC
         # method=cv2.RANSAC: sử dụng thuật toán RANSAC
         # ransacReprojThreshold=5.0: ngưỡng error để coi là inlier (pixels)
+        #VIETLAI
         H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
         
         # mask: array [n×1] với 1=inlier, 0=outlier
@@ -147,6 +147,7 @@ class PanoramaStitcher:
         corners1 = np.float32([[0, 0], [0, h1], [w1, h1], [w1, 0]]).reshape(-1, 1, 2)
         corners2 = np.float32([[0, 0], [0, h2], [w2, h2], [w2, 0]]).reshape(-1, 1, 2)
         
+        #VIETLAI
         corners2_transformed = cv2.perspectiveTransform(corners2, H)
         all_corners = np.concatenate((corners1, corners2_transformed), axis=0)
         
@@ -156,6 +157,7 @@ class PanoramaStitcher:
         # Ma trận dịch chuyển để đảm bảo tất cả pixels nằm trong canvas dương
         translation = np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])
         
+        #VIETLAI
         # Warp img2 với homography + translation
         output_shape = (x_max - x_min, y_max - y_min)
         panorama = cv2.warpPerspective(img2, translation.dot(H), output_shape)
