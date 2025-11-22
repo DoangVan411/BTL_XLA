@@ -125,8 +125,9 @@ class PanoramaStitcher:
         # Tìm homography với RANSAC
         # method=cv2.RANSAC: sử dụng thuật toán RANSAC
         # ransacReprojThreshold=5.0: ngưỡng error để coi là inlier (pixels)
-        #VIETLAI
-        H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+        # VIETLAI: Tự cài đặt RANSAC + DLT (module hóa, không dùng cv2.findHomography)
+        from homography import find_homography_ransac
+        H, mask = find_homography_ransac(src_pts, dst_pts, ransac_reproj_threshold=5.0, max_iters=2000)
         
         # mask: array [n×1] với 1=inlier, 0=outlier
         inliers_count = np.sum(mask) if mask is not None else 0
