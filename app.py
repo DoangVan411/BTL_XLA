@@ -167,9 +167,10 @@ class PanoramaStitcher:
         translation = np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])
         
         #VIETLAI
-        # Warp img2 với homography + translation
-        output_shape = (x_max - x_min, y_max - y_min)
-        panorama = cv2.warpPerspective(img2, translation.dot(H), output_shape)
+        # Warp img2 với homography + translation (tự cài đặt, không dùng cv2.warpPerspective)
+        from transform import warp_perspective
+        output_shape = (x_max - x_min, y_max - y_min)  # (W_out, H_out)
+        panorama = warp_perspective(img2, translation.dot(H), output_shape)
         
         # Vị trí đặt img1 vào panorama
         y_start = -y_min
