@@ -155,8 +155,9 @@ class PanoramaStitcher:
         corners1 = np.float32([[0, 0], [0, h1], [w1, h1], [w1, 0]]).reshape(-1, 1, 2)
         corners2 = np.float32([[0, 0], [0, h2], [w2, h2], [w2, 0]]).reshape(-1, 1, 2)
         
-        #VIETLAI
-        corners2_transformed = cv2.perspectiveTransform(corners2, H)
+        #VIETLAI: Tự cài đặt perspective transform cho điểm (module hóa, không dùng cv2.perspectiveTransform)
+        from transform import perspective_transform
+        corners2_transformed = perspective_transform(corners2, H)
         all_corners = np.concatenate((corners1, corners2_transformed), axis=0)
         
         [x_min, y_min] = np.int32(all_corners.min(axis=0).ravel() - 0.5)
