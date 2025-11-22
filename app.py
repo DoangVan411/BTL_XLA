@@ -78,9 +78,11 @@ class PanoramaStitcher:
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=50)  # Số lần kiểm tra, cao hơn = chính xác hơn nhưng chậm hơn
         
-        #VIETLAI
-        flann = cv2.FlannBasedMatcher(index_params, search_params)
-        matches = flann.knnMatch(desc1, desc2, k=2)
+        # VIETLAI: Thay FLANN bằng matcher tự cài đặt (module hóa)
+        # - Sử dụng khoảng cách Euclid giữa các descriptor
+        # - Trả về 2-NN cho mỗi descriptor bên trái để dùng Lowe's ratio test
+        from matcher import knn_match
+        matches = knn_match(desc1, desc2, k=2)
         
         # Lowe's ratio test để lọc matches tốt
         good_matches = []
