@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_file
+from flask_cors import CORS, cross_origin
 import cv2
 import numpy as np
 import os
@@ -7,6 +8,9 @@ import uuid
 import time
 
 app = Flask(__name__)
+# Bật CORS để cho phép gọi từ frontend (127.0.0.1:5500, live server, v.v.)
+# Có thể giới hạn origin cụ thể nếu muốn an toàn hơn
+CORS(app, resources={r"/*": {"origins": ["http://127.0.0.1:5500", "http://localhost:5500"]}})
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['RESULT_FOLDER'] = 'results'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
@@ -25,10 +29,11 @@ class PanoramaStitcher:
     
     def __init__(self):
         # VIETLAI: Viết lại thuật toán SIFT 
-        self.sift = cv2.SIFT_create(
-            nOctaveLayers=3,
-            contrastThreshold=0.04,
-            edgeThreshold=10,
+        from sift import SIFT
+        self.sift = SIFT(
+            n_octave_layers=3,
+            contrast_threshold=0.04,
+            edge_threshold=10,
             sigma=1.6
         )
         
@@ -334,7 +339,8 @@ class PanoramaStitcher:
 def index():
     return render_template('index.html')
 
-@app.route('/stitch', methods=['POST'])
+@app.route('/stitch', methods=['POST', 'OPTIONS'])
+@cross_origin(origins=["http://127.0.0.1:5500", "http://localhost:5500"])
 def stitch_images():
     try:
         # Kiểm tra có file không

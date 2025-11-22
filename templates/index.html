@@ -467,7 +467,7 @@
             stitchBtn.disabled = true;
 
             try {
-                const response = await fetch('/stitch', {
+                const response = await fetch('http://localhost:5000/stitch', {
                     method: 'POST',
                     body: formData
                 });
