@@ -19,6 +19,7 @@ def encode_image_to_base64(img_bgr: np.ndarray, ext: str = ".jpg") -> Optional[s
     Rationale:
     - Frontend can display the result immediately without relying on filesystem paths.
     """
+    # Mã hoá ảnh BGR thành chuỗi base64 dạng data URL để hiển thị ngay trên web
     ok, buf = cv2.imencode(ext, img_bgr)
     if not ok:
         return None

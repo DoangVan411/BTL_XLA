@@ -30,6 +30,7 @@ class PanoramaService:
 
     def detect_and_compute(self, image: np.ndarray) -> Tuple[List[cv2.KeyPoint], np.ndarray]:
         """Detect keypoints and compute descriptors."""
+        # Phát hiện keypoint và tính descriptor SIFT từ ảnh BGR đầu vào
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return self.sift.detectAndCompute(gray, None)
 
@@ -40,6 +41,7 @@ class PanoramaService:
         Why:
         - Ratio test removes ambiguous matches, improving RANSAC stability.
         """
+        # Ghép đặc trưng bằng KNN (k=2) và áp dụng Lowe ratio để lọc match mơ hồ
         matches = knn_match(desc1, desc2, k=2)
         good: List[Match] = []
         for pair in matches:
@@ -56,6 +58,7 @@ class PanoramaService:
         Why:
         - Robust to outliers, critical for correct warping.
         """
+        # Ước lượng ma trận homography H bằng RANSAC + DLT (tự cài đặt)
         if len(matches) < 4:
             return None, None
         src_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
@@ -70,6 +73,7 @@ class PanoramaService:
         Why:
         - Simple gradient blending hides seams for a more natural panorama.
         """
+        # Warp ảnh img2 theo H lên canvas chung và hoà trộn dần (alpha) vùng chồng lấp với img1
         h1, w1 = img1.shape[:2]
         h2, w2 = img2.shape[:2]
 
@@ -125,6 +129,7 @@ class PanoramaService:
     @staticmethod
     def crop_black_borders(img: np.ndarray) -> np.ndarray:
         """Crop black borders introduced by perspective warp."""
+        # Cắt bớt các viền đen sinh ra do phép biến đổi phối cảnh
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -140,6 +145,7 @@ class PanoramaService:
 
     def stitch(self, images: List[np.ndarray]) -> np.ndarray:
         """Stitch a list of images into a panorama."""
+        # Ghép tuần tự các ảnh: tìm H từng cặp -> warp/blend dồn vào kết quả -> cắt viền đen
         if len(images) < 2:
             raise ValueError("At least two images are required for stitching.")
 

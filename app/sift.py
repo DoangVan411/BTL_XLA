@@ -61,7 +61,7 @@ class SIFT:
         est_octaves = max(1, int(np.floor(np.log2(min_hw))) - 3)  # trừ bớt để tránh quá nhiều
         num_octaves = self.max_octaves if self.max_octaves is not None else max(1, min(est_octaves, 8))
 
-        # 1) Gaussian Pyramid
+        # 1) Gaussian Pyramid -> tạo các octaves, mỗi octave có num_scales ảnh Gaussian
         gauss_pyr, sigmas_per_level = self._build_gaussian_pyramid(img, num_octaves)
 
         # 2) DoG Pyramid
@@ -73,7 +73,7 @@ class SIFT:
         if not raw_keypoints:
             return [], None
 
-        # 4) Gán hướng (có thể sinh thêm kp cho các đỉnh phụ)
+        # 4) Gán hướng 
         oriented_keypoints = self._assign_orientations(gauss_pyr, raw_keypoints)
 
         if not oriented_keypoints:
@@ -214,8 +214,8 @@ class SIFT:
         num_bins: int = 36,
     ) -> List[cv2.KeyPoint]:
         """
-        Với mỗi keypoint, tính histogram hướng (36 bins) trong vùng lân cận (radius ~ 3*sigma).
-        Đỉnh lớn nhất -> hướng chính; các đỉnh phụ > 0.8*max cũng tạo keypoint mới.
+        Với mỗi keypoint, tính histogram hướng trong vùng lân cận.
+        Đỉnh lớn nhất -> hướng chính;.
         """
         keypoints: List[cv2.KeyPoint] = []
         bin_width = 360.0 / num_bins
@@ -303,7 +303,7 @@ class SIFT:
 
         for kp in keypoints:
             o = max(0, int(kp.octave))
-            # Với mỗi kp, dùng level giữa của octave để đo gradient ổn định
+            # Với mỗi keypoint, dùng level giữa của octave để đo gradient ổn định
             s = min(self.n_octave_layers, self.n_octave_layers)  # lấy 1 level hợp lý
             img = gauss_pyr[o][s]
             h, w = img.shape

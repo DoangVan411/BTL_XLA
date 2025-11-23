@@ -15,6 +15,7 @@ from app.config import Config
 
 def create_app() -> Flask:
     """Create and configure Flask application instance."""
+    # Khởi tạo Flask app, nạp cấu hình và đăng ký các route/CORS
     app = Flask(__name__, template_folder=Config.TEMPLATES_DIR, static_folder=Config.STATIC_DIR)
     app.config.from_object(Config)
 

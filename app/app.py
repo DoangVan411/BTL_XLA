@@ -15,6 +15,7 @@ from app.factory import create_app
 
 def _open_browser():
     """Open the browser once after the server starts (avoid double-open with reloader)."""
+    # Mở trình duyệt đến địa chỉ ứng dụng sau khi server khởi động
     webbrowser.open(f"http://localhost:{Config.PORT}/")
 
 

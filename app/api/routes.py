@@ -29,12 +29,14 @@ def _allowed_file(filename: str) -> bool:
 @bp.get("/")
 def index():
     """Render home page."""
+    # Trang chủ giao diện Flask (hiện không cần khi chạy Streamlit)
     return render_template("index.html")
 
 
 @bp.post("/stitch")
 def stitch_images():
     """Stitch uploaded images into a panorama and return JSON with base64 image."""
+    # API: nhận ảnh tải lên -> decode -> ghép panorama bằng PanoramaService -> lưu & trả JSON
     try:
         if "images" not in request.files:
             return jsonify({"error": "Không có file nào được tải lên"}), 400
@@ -88,6 +90,7 @@ def stitch_images():
 @bp.get("/result/<result_id>")
 def get_result(result_id: str):
     """Return saved panorama file for download or fallback display."""
+    # API: trả file ảnh kết quả theo mã id (download/hiển thị)
     try:
         result_path = os.path.join(current_app.config["RESULT_FOLDER"], f"{result_id}.jpg")
         if os.path.exists(result_path):

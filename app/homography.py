@@ -14,6 +14,7 @@ def _normalize_points(pts: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
       pts_norm: (N, 2)
       T: ma trận biến đổi 3x3
     """
+    # Chuẩn hoá toạ độ giúp thuật toán DLT ổn định hơn về mặt số học
     if pts.ndim == 3:
         pts_2d = pts.reshape(-1, 2)
     else:
@@ -44,6 +45,7 @@ def _dlt_homography(src_pts: np.ndarray, dst_pts: np.ndarray) -> Optional[np.nda
     - src_pts, dst_pts: (N, 2) hoặc (N, 1, 2), N >= 4
     Trả về H hoặc None nếu suy biến.
     """
+    # Dựng hệ phương trình từ các cặp điểm, giải bằng SVD để suy ra H
     if src_pts.shape[0] < 4 or dst_pts.shape[0] < 4:
         return None
 
@@ -92,6 +94,7 @@ def _project_points(H: np.ndarray, pts: np.ndarray) -> np.ndarray:
     """
     Chiếu điểm pts (N, 2) bằng H: (x, y, 1) -> (u, v, w) -> (u/w, v/w)
     """
+    # Chiếu toạ độ bằng không gian đồng nhất và quy đổi về (x, y)
     if pts.ndim == 3:
         pts = pts.reshape(-1, 2)
     pts_h = np.hstack([pts.astype(np.float64), np.ones((pts.shape[0], 1), dtype=np.float64)])
@@ -110,13 +113,14 @@ def find_homography_ransac(
 ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
     """
     Tìm homography với RANSAC (không dùng cv2.findHomography).
-    - src_pts: (N, 1, 2) hoặc (N, 2) điểm nguồn
-    - dst_pts: (N, 1, 2) hoặc (N, 2) điểm đích
+    - src_pts: (N, 2) điểm nguồn
+    - dst_pts: (N, 2) điểm đích
     - ransac_reproj_threshold: ngưỡng inlier theo lỗi Euclid (pixel)
     - max_iters: số vòng lặp RANSAC
     Trả về:
       H (3x3) và mask (N, 1) với 1=inlier, 0=outlier; hoặc (None, None) nếu thất bại.
     """
+    # Lặp chọn mẫu nhỏ (4 cặp), ước lượng H, đếm inlier theo lỗi chiếu; chọn H tốt nhất và tinh chỉnh
     if src_pts.shape[0] < 4 or dst_pts.shape[0] < 4:
         return None, None
 

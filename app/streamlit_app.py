@@ -20,6 +20,7 @@ def decode_image_file_to_bgr(file_bytes: bytes, max_dim: int = 800) -> np.ndarra
     """
     Decode raw bytes to BGR image (OpenCV) and resize if larger than max_dim.
     """
+    # Giải mã bytes thành ảnh BGR và thu nhỏ nếu quá lớn (tối ưu hiệu năng/hiển thị)
     file_array = np.frombuffer(file_bytes, np.uint8)
     img = cv2.imdecode(file_array, cv2.IMREAD_COLOR)
     if img is None:
@@ -32,10 +33,12 @@ def decode_image_file_to_bgr(file_bytes: bytes, max_dim: int = 800) -> np.ndarra
 
 
 def bgr_to_rgb(img_bgr: np.ndarray) -> np.ndarray:
+    # Chuyển BGR -> RGB để Streamlit hiển thị đúng màu
     return cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
 
 def encode_jpeg(img_bgr: np.ndarray) -> bytes:
+    # Mã hoá ảnh BGR thành JPEG bytes để phục vụ nút tải xuống
     ok, buf = cv2.imencode(".jpg", img_bgr)
     if not ok:
         return b""
@@ -74,7 +77,7 @@ def main() -> None:
             for i, f in enumerate(uploaded_files):
                 with cols[i % len(cols)]:
                     file_bytes = f.getvalue()
-                    # Show preview smaller (convert to RGB for Streamlit)
+                    # Hiển thị ảnh xem trước (giảm kích thước để phù hợp màn hình)
                     img_bgr = decode_image_file_to_bgr(file_bytes, max_dim=300)
                     if img_bgr is not None:
                         st.image(bgr_to_rgb(img_bgr), caption=f.name, width=220)
@@ -101,6 +104,7 @@ def main() -> None:
                     return
 
                 # Panorama pipeline
+                # Khởi tạo dịch vụ ghép panorama sử dụng SIFT tự cài đặt
                 service = PanoramaService(
                     sift=SIFT(n_octave_layers=3, contrast_threshold=0.04, edge_threshold=10, sigma=1.6)
                 )

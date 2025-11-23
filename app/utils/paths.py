@@ -15,6 +15,7 @@ def ensure_dirs(*paths: str) -> None:
     Rationale:
     - Avoid runtime errors when writing uploads/results if directories are missing.
     """
+    # Tạo các thư mục mục tiêu nếu chưa tồn tại để tránh lỗi khi lưu file
     for path in paths:
         os.makedirs(path, exist_ok=True)
 
