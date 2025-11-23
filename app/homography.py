@@ -3,6 +3,56 @@ from typing import Optional, Tuple
 import numpy as np
 
 
+def _smallest_singular_vector(
+    A: np.ndarray, max_iters: int = 2000, tol: float = 1e-10, seed: Optional[int] = None
+) -> Optional[np.ndarray]:
+    """
+    Tìm vector singular tương ứng singular value nhỏ nhất của A
+    bằng power-iteration trên ma trận B = c*I - (A^T A),
+    trong đó c >= lambda_max(A^T A) (dùng c = trace để đảm bảo).
+
+    Trả về vector đơn vị v sao cho v ~ argmin ||A v||, hoặc None nếu thất bại.
+    """
+    if A.size == 0:
+        return None
+    # M = A^T A là đối xứng dương bán xác định
+    M = A.T @ A
+    n = M.shape[0]
+    if n == 0:
+        return None
+
+    # Chọn c >= lambda_max(M). trace(M) >= lambda_max(M) luôn đúng.
+    c = float(np.trace(M)) + 1e-12
+    B = (c * np.eye(n, dtype=np.float64)) - M
+
+    rng = np.random.default_rng(seed)
+    v = rng.normal(size=(n,)).astype(np.float64)
+    # Tránh vector khởi tạo quá nhỏ
+    nv = np.linalg.norm(v) + 1e-18
+    v = v / nv
+
+    last_v = v
+    for _ in range(max_iters):
+        w = B @ v
+        nw = np.linalg.norm(w)
+        if nw < 1e-20:
+            # Bị suy biến; thử khởi tạo lại
+            v = rng.normal(size=(n,)).astype(np.float64)
+            nv = np.linalg.norm(v) + 1e-18
+            v = v / nv
+            continue
+        v = w / nw
+        if np.linalg.norm(v - last_v) < tol:
+            break
+        last_v = v
+
+    # Chuẩn hoá kết quả
+    nv = np.linalg.norm(v)
+    if nv < 1e-20 or not np.isfinite(nv):
+        return None
+    return (v / nv).astype(np.float64)
+
+
 def _normalize_points(pts: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Chuẩn hoá điểm (Hartley normalization) để tăng ổn định số:
@@ -69,12 +119,10 @@ def _dlt_homography(src_pts: np.ndarray, dst_pts: np.ndarray) -> Optional[np.nda
     A[1::2, 3:6] = np.stack([-x, -y, -np.ones_like(x)], axis=1)
     A[1::2, 6:9] = np.stack([v * x, v * y, v], axis=1)
 
-    # Giải bằng SVD
-    try:
-        _, _, Vt = np.linalg.svd(A, full_matrices=False)
-    except np.linalg.LinAlgError:
+    # Giải vector singular nhỏ nhất bằng power-iteration trên B = cI - A^T A
+    h = _smallest_singular_vector(A, max_iters=2000, tol=1e-12, seed=None)
+    if h is None:
         return None
-    h = Vt[-1, :]
     Hn = h.reshape(3, 3)
 
     # Khử chuẩn hoá
