@@ -131,16 +131,21 @@ class PanoramaService:
         """Crop black borders introduced by perspective warp."""
         # Cắt bớt các viền đen sinh ra do phép biến đổi phối cảnh
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Dùng ngưỡng cao hơn để loại bỏ vùng xám rất tối gần biên
+        _, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
+        # Erode nhẹ để "ăn" sâu thêm vài pixel vào vùng hợp lệ, giúp loại viền đen mỏng
+        kernel = np.ones((5, 5), np.uint8)
+        eroded = cv2.erode(thresh, kernel, iterations=1)
+        contours, _ = cv2.findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if len(contours) == 0:
             return img
         x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
-        padding = 2
-        x = max(0, x - padding)
-        y = max(0, y - padding)
-        w = min(img.shape[1] - x, w + 2 * padding)
-        h = min(img.shape[0] - y, h + 2 * padding)
+        # Thu nhỏ khung thêm vài pixel để đảm bảo không còn viền đen mỏng
+        shrink = 5
+        x = min(max(0, x + shrink), img.shape[1])
+        y = min(max(0, y + shrink), img.shape[0])
+        w = max(0, min(img.shape[1] - x, w - 2 * shrink))
+        h = max(0, min(img.shape[0] - y, h - 2 * shrink))
         return img[y:y + h, x:x + w]
 
     def stitch(self, images: List[np.ndarray]) -> np.ndarray:
