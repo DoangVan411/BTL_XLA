@@ -1,3 +1,4 @@
+
 """
 Panorama stitching service.
 
