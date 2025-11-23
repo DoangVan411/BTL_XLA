@@ -36,7 +36,6 @@ def _smallest_singular_vector(
         w = B @ v
         nw = np.linalg.norm(w)
         if nw < 1e-20:
-            # Bị suy biến; thử khởi tạo lại
             v = rng.normal(size=(n,)).astype(np.float64)
             nv = np.linalg.norm(v) + 1e-18
             v = v / nv
