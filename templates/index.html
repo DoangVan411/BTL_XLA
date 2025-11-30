@@ -41,9 +41,6 @@
             <div class="result-section" id="resultSection">
                 <h3 class="preview-title">✨ Kết Quả Panorama</h3>
                 <img class="result-image" id="resultImage" alt="Panorama Result">
-                <a class="download-btn" id="downloadBtn" download="panorama.jpg">
-                    ⬇️ Tải Xuống Ảnh
-                </a>
             </div>
         </div>
     </div>
@@ -61,7 +58,6 @@
         const message = document.getElementById('message');
         const resultSection = document.getElementById('resultSection');
         const resultImage = document.getElementById('resultImage');
-        const downloadBtn = document.getElementById('downloadBtn');
 
         // Click để chọn file
         uploadArea.addEventListener('click', () => {
@@ -160,8 +156,8 @@
 
                 if (response.ok && data.success) {
                     showMessage(data.message, 'success');
-                    resultImage.src = `/result/${data.result_id}`;
-                    downloadBtn.href = `/result/${data.result_id}`;
+                    // Hiển thị trực tiếp ảnh base64 trả về từ API
+                    resultImage.src = data.image_data;
                     resultSection.classList.add('show');
                 } else {
                     showMessage(data.error || 'Có lỗi xảy ra!', 'error');
