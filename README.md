@@ -28,9 +28,9 @@ pip install -r requirements.txt
 
 ## 🎮 Sử Dụng
 
-1. Chạy ứng dụng:
+1. Chạy ứng dụng (local, không Docker):
 ```bash
-python app.py
+python -m app.app
 ```
 
 2. Mở trình duyệt và truy cập: `http://localhost:5000`
@@ -41,23 +41,53 @@ python app.py
 
 5. Tải xuống kết quả
 
+## 🐳 Chạy bằng Docker
+
+1. Build image:
+```bash
+docker build -t panorama-stitcher .
+```
+
+2. Chạy container (Linux/macOS):
+```bash
+docker run --rm -p 5000:5000 panorama-stitcher
+```
+
+2. Chạy container (Windows CMD):
+```bash
+docker run --rm -p 5000:5000 panorama-stitcher
+```
+
+3. Truy cập: `http://localhost:5000`
+
 ## 📝 Lưu Ý
 
 - Các ảnh nên có phần chồng lấn ít nhất 30-40%
 - Chụp ảnh từ cùng một vị trí, xoay camera theo chiều ngang
 - Tránh các vật thể di chuyển trong khung hình
 - Độ phân giải ảnh sẽ được tự động điều chỉnh để tối ưu hiệu suất
+- Ứng dụng trả ảnh kết quả dưới dạng base64 qua API/HTTP response
 
 ## 🛠️ Cấu Trúc Dự Án
 
 ```
-XLA/
-├── app.py                 # Backend Flask
+BTL_XLA/
+├── app/
+│   ├── app.py             # Entry chạy Flask (python -m app.app)
+│   ├── factory.py         # Khởi tạo Flask app
+│   ├── api/
+│   │   └── routes.py      # HTTP routes (Blueprint)
+│   ├── services/
+│   │   └── panorama_service.py
+│   ├── utils/
+│   │   └── image_io.py
+│   ├── sift.py, matcher.py, homography.py, transform.py
+│   └── config.py
 ├── requirements.txt       # Thư viện Python
+├── Dockerfile             # Đóng gói/chạy bằng Docker
 ├── templates/
 │   └── index.html        # Giao diện web
-├── uploads/              # Thư mục lưu ảnh upload (tự động tạo)
-└── results/              # Thư mục lưu kết quả (tự động tạo)
+
 ```
 
 ## 🎯 Các Kỹ Thuật Xử Lý Ảnh
