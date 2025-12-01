@@ -1,117 +1,133 @@
-# Panorama Image Stitcher
+# GHÉP ẢNH PANORAMA
 
-Ứng dụng web ghép ảnh panorama sử dụng các kỹ thuật xử lý ảnh nâng cao.
+Ứng dụng web ghép ảnh panorama tự động sử dụng các kỹ thuật xử lý ảnh nâng cao. Hỗ trợ giao diện web Flask
 
-## 🚀 Tính Năng
+### Link Slide trình bày báo cáo
+[Slide trình bày BTL](https://www.canva.com/design/DAG4mOlDkIQ/-DEv2SrYDvIprM9vEf9RVQ/edit?utm_content=DAG4mOlDkIQ&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
-- **SIFT (Scale-Invariant Feature Transform)**: Phát hiện điểm đặc trưng trong ảnh
-- **Feature Matching**: Ghép cặp đặc trưng giữa các ảnh sử dụng FLANN matcher
+## ✨ Tính Năng Chính
+
+### Thuật Toán Xử Lý Ảnh
+- **SIFT (Scale-Invariant Feature Transform)**: Tự cài đặt từ đầu, phát hiện điểm đặc trưng bất biến với scale và rotation
+- **Feature Matching**: Ghép cặp đặc trưng giữa các ảnh sử dụng FLANN matcher với k-NN (k=2)
 - **Lowe's Ratio Test**: Lọc các cặp ghép tốt với ngưỡng 0.7
-- **Homography**: Tính ma trận biến đổi 3x3 giữa các ảnh
-- **RANSAC**: Loại bỏ outliers và tìm homography chính xác
-- **Image Warping & Blending**: Biến đổi và trộn ảnh tạo panorama mượt mà
+- **Homography với RANSAC**: Tính ma trận biến đổi 3x3, loại bỏ outliers (ngưỡng 5.0 pixels)
+- **Image Warping & Blending**: Biến đổi phối cảnh và trộn ảnh tạo panorama mượt mà
 
-## 📋 Yêu Cầu
+### Giao Diện
+- **Flask Web App**: Giao diện web đơn giản với HTML/CSS/JavaScript
+- **REST API**: Endpoint để tích hợp vào ứng dụng khác
 
-- Python 3.8+
-- OpenCV với module contrib (SIFT)
-- Flask
+## 📋 Yêu Cầu Hệ Thống
+
+- **Python**: 3.8 trở lên (khuyến nghị 3.10+)
+- **OpenCV**: opencv-python và opencv-contrib-python (hỗ trợ SIFT)
+- **Flask**: Framework web chính
+- **NumPy**: Xử lý mảng và ma trận
 
 ## 🔧 Cài Đặt
 
-1. Clone repository hoặc tải về mã nguồn
+1. **Clone repository**
+```bash
+git clone <repository-url>
+cd XLA
+```
 
-2. Cài đặt các thư viện cần thiết:
+2. **Cài đặt dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-## 🎮 Sử Dụng
+## 🎮 Hướng Dẫn Sử Dụng
 
-1. Chạy ứng dụng (local, không Docker):
+1. **Khởi động server**
 ```bash
 python -m app.app
 ```
 
-2. Mở trình duyệt và truy cập: `http://localhost:5000`
+2. **Truy cập ứng dụng**: Trình duyệt sẽ tự động mở `http://localhost:5000`
 
-3. Upload 2 hoặc nhiều ảnh có phần chồng lấn
+3. **Upload và ghép ảnh**:
+   - Click vào khu vực upload hoặc kéo thả 2+ ảnh
+   - Định dạng hỗ trợ: JPG, JPEG, PNG
+   - Kích thước tối đa: 16MB/ảnh
+   - Click "Ghép Ảnh Panorama"
+   - Tải xuống kết quả
 
-4. Click "Ghép Ảnh Panorama" để tạo ảnh toàn cảnh
+### API Endpoint
 
-5. Tải xuống kết quả
-
-## 🐳 Chạy bằng Docker
-
-1. Build image:
 ```bash
-docker build -t panorama-stitcher .
+POST /api/stitch
+Content-Type: multipart/form-data
+
+# Gửi file ảnh với key "images[]"
+# Response: JSON với ảnh panorama dạng base64
 ```
 
-2. Chạy container (Linux/macOS):
-```bash
-docker run --rm -p 5000:5000 panorama-stitcher
-```
-
-2. Chạy container (Windows CMD):
-```bash
-docker run --rm -p 5000:5000 panorama-stitcher
-```
-
-3. Truy cập: `http://localhost:5000`
-
-## 📝 Lưu Ý
-
-- Các ảnh nên có phần chồng lấn ít nhất 30-40%
-- Chụp ảnh từ cùng một vị trí, xoay camera theo chiều ngang
-- Tránh các vật thể di chuyển trong khung hình
-- Độ phân giải ảnh sẽ được tự động điều chỉnh để tối ưu hiệu suất
-- Ứng dụng trả ảnh kết quả dưới dạng base64 qua API/HTTP response
 
 ## 🛠️ Cấu Trúc Dự Án
 
 ```
-BTL_XLA/
+XLA/
 ├── app/
-│   ├── app.py             # Entry chạy Flask (python -m app.app)
-│   ├── factory.py         # Khởi tạo Flask app
+│   ├── __init__.py
+│   ├── app.py                 # Entry point chạy Flask app
+│   ├── factory.py             # Flask app factory pattern
+│   ├── config.py              # Cấu hình (port, paths, limits)
+│   ├── streamlit_app.py       # Giao diện Streamlit
+│   │
 │   ├── api/
-│   │   └── routes.py      # HTTP routes (Blueprint)
+│   │   ├── __init__.py
+│   │   └── routes.py          # Flask Blueprint (API endpoints)
+│   │
 │   ├── services/
-│   │   └── panorama_service.py
+│   │   ├── __init__.py
+│   │   └── panorama_service.py # Logic ghép ảnh chính
+│   │
 │   ├── utils/
-│   │   └── image_io.py
-│   ├── sift.py, matcher.py, homography.py, transform.py
-│   └── config.py
-├── requirements.txt       # Thư viện Python
-├── Dockerfile             # Đóng gói/chạy bằng Docker
+│   │   ├── __init__.py
+│   │   ├── image_io.py        # Đọc/ghi/encode ảnh
+│   │   └── paths.py           # Xử lý đường dẫn
+│   │
+│   ├── sift.py                # SIFT implementation
+│   ├── matcher.py             # Feature matching + Lowe's test
+│   ├── homography.py          # Homography + RANSAC
+│   └── transform.py           # Warping & blending
+│
 ├── templates/
-│   └── index.html        # Giao diện web
-
+│   └── index.html             # Giao diện web Flask
+│
+├── static/
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── app.js
+│
+├── nature/                    # Ảnh mẫu test (nếu có)
+├── uploads/                   # Thư mục tạm (gitignored)
+│
+├── requirements.txt           # Python dependencies
+└── README.md
 ```
 
-## 🎯 Các Kỹ Thuật Xử Lý Ảnh
+## Kết quả triển khai
+![alt text](/app/demo_imgs/image.png)
 
-### 1. SIFT (Scale-Invariant Feature Transform)
-- Phát hiện keypoints bất biến với scale và rotation
-- Tạo descriptors 128 chiều cho mỗi keypoint
+Ghép 2 ảnh bất kỳ:
+![alt text](/app/demo_imgs/image-1.png)
+![alt text](/app/demo_imgs/image-2.png)
 
-### 2. Feature Matching
-- Sử dụng FLANN (Fast Library for Approximate Nearest Neighbors)
-- K-NN matching với k=2
+Ghép nhiều(6) ảnh cùng lúc:
+![alt text](/app/demo_imgs/image-3.png)
+![alt text](/app/demo_imgs/image-4.png)
 
-### 3. Lowe's Ratio Test
-- Lọc matches tốt với điều kiện: distance(m) < 0.7 * distance(n)
-
-### 4. Homography với RANSAC
-- Tìm ma trận biến đổi 3x3 
-- RANSAC loại bỏ outliers với ngưỡng 5.0 pixels
-
-### 5. Warping & Blending
-- Perspective transform sử dụng homography
-- Tính toán canvas size phù hợp
-- Trộn ảnh tự nhiên
+Ghép ảnh trong đó có 1 ảnh thẳng đúng, một ảnh nằm ngang:
+![alt text](/app/demo_imgs/image-5.png)
+![alt text](/app/demo_imgs/image-6.png)
 
 ## 📄 License
 
-MIT License
+MIT License - Tự do sử dụng, chỉnh sửa và phân phối.
+
+---
+
