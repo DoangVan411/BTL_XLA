@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghép Ảnh</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ Ghép Ảnh</h1>
+            <p>Ghép nhiều ảnh thành một bức tranh toàn cảnh</p>
+        </div>
+
+        <div class="main-card">
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Kéo thả ảnh vào đây hoặc click để chọn</div>
+                    <div class="upload-subtext">Hỗ trợ: JPG, PNG (Tối thiểu 2 ảnh)</div>
+                </div>
+                <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/jpg">
+            </div>
+
+            <div class="preview-section" id="previewSection" style="display: none;">
+                <h3 class="preview-title">Ảnh đã chọn (<span id="imageCount">0</span>)</h3>
+                <div class="preview-grid" id="previewGrid"></div>
+                <button class="stitch-btn" id="stitchBtn" disabled>
+                    🎨 Ghép Ảnh
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Đang xử lý ảnh... Vui lòng đợi</p>
+            </div>
+
+            <div class="message" id="message"></div>
+
+            <div class="result-section" id="resultSection">
+                <h3 class="preview-title">✨ Kết Quả Panorama</h3>
+                <img class="result-image" id="resultImage" alt="Panorama Result">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const previewGrid = document.getElementById('previewGrid');
+        const imageCount = document.getElementById('imageCount');
+        const stitchBtn = document.getElementById('stitchBtn');
+        const loading = document.getElementById('loading');
+        const message = document.getElementById('message');
+        const resultSection = document.getElementById('resultSection');
+        const resultImage = document.getElementById('resultImage');
+
+        // Click để chọn file
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Xử lý file được chọn
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            const validFiles = Array.from(files).filter(file => 
+                file.type === 'image/jpeg' || file.type === 'image/png'
+            );
+
+            selectedFiles = [...selectedFiles, ...validFiles];
+            updatePreview();
+        }
+
+        function updatePreview() {
+            previewGrid.innerHTML = '';
+            imageCount.textContent = selectedFiles.length;
+
+            if (selectedFiles.length > 0) {
+                previewSection.style.display = 'block';
+                
+                selectedFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item';
+                        div.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview ${index + 1}">
+                            <button class="remove-btn" onclick="removeImage(${index})">×</button>
+                        `;
+                        previewGrid.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                stitchBtn.disabled = selectedFiles.length < 2;
+            } else {
+                previewSection.style.display = 'none';
+            }
+
+            hideMessage();
+            resultSection.classList.remove('show');
+        }
+
+        function removeImage(index) {
+            selectedFiles.splice(index, 1);
+            updatePreview();
+        }
+
+        // Ghép ảnh
+        stitchBtn.addEventListener('click', async () => {
+            if (selectedFiles.length < 2) {
+                showMessage('Vui lòng chọn ít nhất 2 ảnh!', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('images', file);
+            });
+
+            loading.classList.add('show');
+            hideMessage();
+            resultSection.classList.remove('show');
+            stitchBtn.disabled = true;
+
+            try {
+                const response = await fetch('/stitch', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showMessage(data.message, 'success');
+                    // Hiển thị trực tiếp ảnh base64 trả về từ API
+                    resultImage.src = data.image_data;
+                    resultSection.classList.add('show');
+                } else {
+                    showMessage(data.error || 'Có lỗi xảy ra!', 'error');
+                }
+            } catch (error) {
+                showMessage('Không thể kết nối đến server!', 'error');
+            } finally {
+                loading.classList.remove('show');
+                stitchBtn.disabled = false;
+            }
+        });
+
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type} show`;
+        }
+
+        function hideMessage() {
+            message.classList.remove('show');
+        }
+
+        // Expose removeImage to global scope
+        window.removeImage = removeImage;
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
